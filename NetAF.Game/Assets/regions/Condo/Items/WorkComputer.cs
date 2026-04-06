@@ -83,6 +83,14 @@ namespace NetAF.Game.Assets.Regions.Condo.Items
 
                     NetAF.MyGame.GameState.AddActiveCase(args[0]);
                     return new Reaction(ReactionResult.Inform, $"Started case {args[0]}");
+                }),
+
+                // Enter the computer interaction mode which exposes computer-specific commands first
+                new CustomCommand(new CommandHelp("UseComputer", "Enter the computer interface"), true, true, (game, args) =>
+                {
+                    var sceneInterpreter = game.Configuration.InterpreterProvider.Find(typeof(NetAF.Logic.Modes.SceneMode));
+                    game.ChangeMode(new NetAF.Game.Modes.ComputerInteractionMode(sceneInterpreter));
+                    return new Reaction(ReactionResult.GameModeChanged, string.Empty);
                 })
             };
 
