@@ -262,8 +262,74 @@ namespace NetAF.Game.Tests
         }
 
         // ---------------------------------------------------------------
-        // GetRuleSchema
+        // Derived facts as base facts (dual-role)
         // ---------------------------------------------------------------
+
+        [TestMethod]
+        public void GivenConnectionExplicitlySetAsBaseFact_WhenPrereqsNotMet_ThenHasFlagTrue()
+        {
+            // A derived flag can be pinned as a base fact directly, even without prerequisites.
+            NodeMapState.SetFlag(NodeMapState.ConnLexicon);
+
+            Assert.IsTrue(NodeMapState.HasFlag(NodeMapState.ConnLexicon));
+        }
+
+        [TestMethod]
+        public void GivenConnectionExplicitlySetAsBaseFact_ThenHasConnectionTrue()
+        {
+            // HasConnection should return true whether the connection was derived or explicitly set.
+            NodeMapState.SetFlag(NodeMapState.ConnLexicon);
+
+            Assert.IsTrue(NodeMapState.HasConnection(NodeMapState.ConnLexicon));
+        }
+
+        [TestMethod]
+        public void GivenConnectionExplicitlySet_WhenCleared_ThenHasConnectionFalse()
+        {
+            NodeMapState.SetFlag(NodeMapState.ConnLexicon);
+            NodeMapState.ClearFlag(NodeMapState.ConnLexicon);
+
+            Assert.IsFalse(NodeMapState.HasConnection(NodeMapState.ConnLexicon));
+        }
+
+        [TestMethod]
+        public void GivenConnectionExplicitlySet_WhenPrereqsAlsoSatisfied_ThenHasFlagTrue()
+        {
+            // Derived and base coexist without conflict.
+            NodeMapState.SetFlag(NodeMapState.ConnLexicon);  // base fact
+            NodeMapState.SetFlag(NodeMapState.ObjAFound);
+            NodeMapState.SetFlag(NodeMapState.ObjEFound);    // now also derived
+
+            Assert.IsTrue(NodeMapState.HasFlag(NodeMapState.ConnLexicon));
+            Assert.IsTrue(NodeMapState.HasConnection(NodeMapState.ConnLexicon));
+        }
+
+        [TestMethod]
+        public void GivenConnectionDerivedAndExplicitlySet_WhenPrereqsCleared_ThenConnectionStillActiveViaBaseFact()
+        {
+            // Explicitly setting keeps the connection alive even after prereqs are cleared.
+            NodeMapState.SetFlag(NodeMapState.ObjAFound);
+            NodeMapState.SetFlag(NodeMapState.ObjEFound);    // derived: ConnLexicon is now true
+            NodeMapState.SetFlag(NodeMapState.ConnLexicon);  // also pin as base fact
+
+            NodeMapState.ClearFlag(NodeMapState.ObjAFound);  // remove a prerequisite
+
+            // Still active because it was also set as a base fact
+            Assert.IsTrue(NodeMapState.HasFlag(NodeMapState.ConnLexicon));
+            Assert.IsTrue(NodeMapState.HasConnection(NodeMapState.ConnLexicon));
+        }
+
+        [TestMethod]
+        public void GivenConnectionDerived_ThenHasConnectionTrue()
+        {
+            // Sanity check: derived-only path still works via HasConnection.
+            NodeMapState.SetFlag(NodeMapState.ObjAFound);
+            NodeMapState.SetFlag(NodeMapState.ObjEFound);
+
+            Assert.IsTrue(NodeMapState.HasConnection(NodeMapState.ConnLexicon));
+        }
+
+
 
         [TestMethod]
         public void WhenGetRuleSchema_ThenReturnsAllThreeRules()

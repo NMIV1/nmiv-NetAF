@@ -141,13 +141,15 @@ namespace NetAF.MyGame
         }
 
         /// <summary>
-        /// Check whether a named connection (derived fact) has been unlocked.
+        /// Check whether a named connection is active.
+        /// Returns true if the connection was derived from its prerequisites,
+        /// or was explicitly set as a base fact.
         /// </summary>
         /// <param name="connectionName">The connection name.</param>
         /// <returns>True if the connection is active.</returns>
         public static bool HasConnection(string connectionName)
         {
-            return derivedFacts.Contains(connectionName);
+            return derivedFacts.Contains(connectionName) || baseFacts.Contains(connectionName);
         }
 
         /// <summary>
@@ -228,18 +230,35 @@ namespace NetAF.MyGame
         }
 
         /// <summary>
-        /// Recompute all derived facts from scratch based on current base facts.
-        /// Derived facts that no longer have all prerequisites satisfied are removed.
+        /// Recompute all derived facts from scratch using fixpoint iteration.
+        /// Each newly derived fact is immediately available as a prerequisite for
+        /// subsequent rules, so derived facts can chain: A → B → C is supported.
+        /// Facts that no longer have all prerequisites satisfied are removed.
         /// </summary>
         private static void EvaluateDerived()
         {
             derivedFacts.Clear();
 
-            foreach (var rule in connectionRules)
+            // Build a working set that starts from base facts and grows as new
+            // derived facts are added.  Iterate until no new facts are produced.
+            var available = new HashSet<string>(baseFacts);
+            bool changed;
+
+            do
             {
-                if (rule.Value.IsSubsetOf(baseFacts))
-                    derivedFacts.Add(rule.Key);
+                changed = false;
+
+                foreach (var rule in connectionRules)
+                {
+                    if (!derivedFacts.Contains(rule.Key) && rule.Value.IsSubsetOf(available))
+                    {
+                        derivedFacts.Add(rule.Key);
+                        available.Add(rule.Key);
+                        changed = true;
+                    }
+                }
             }
+            while (changed);
         }
 
         /// <summary>
