@@ -27,8 +27,15 @@ namespace NetAF.Targets.Console
 
             if (frame is IConsoleFrame consoleFrame)
             {
-                System.Console.CursorVisible = consoleFrame.ShowCursor;
-                System.Console.SetCursorPosition(consoleFrame.CursorLeft, consoleFrame.CursorTop);
+                try
+                {
+                    System.Console.CursorVisible = consoleFrame.ShowCursor;
+                    System.Console.SetCursorPosition(consoleFrame.CursorLeft, consoleFrame.CursorTop);
+                }
+                catch (System.IO.IOException)
+                {
+                    // No real console window (e.g. piped output in CI); ignore cursor positioning.
+                }
             }
         }
 
@@ -47,7 +54,14 @@ namespace NetAF.Targets.Console
         /// <param name="game">The game to set up for.</param>
         public void Setup(Game game)
         {
-            System.Console.Title = game.Info.Name;
+            try
+            {
+                System.Console.Title = game.Info.Name;
+            }
+            catch (System.IO.IOException)
+            {
+                // No real console window (e.g. piped output in CI); ignore title setting.
+            }
 
             if (game.Configuration.DisplaySize == Size.Dynamic)
                 return;
@@ -72,7 +86,14 @@ namespace NetAF.Targets.Console
         /// <param name="frame">The frame to render.</param>
         public void RenderFrame(IFrame frame)
         {
-            System.Console.Clear();
+            try
+            {
+                System.Console.Clear();
+            }
+            catch (System.IO.IOException)
+            {
+                // No real console window (e.g. piped output in CI); ignore clear.
+            }
 
             UpdatableFrameManager.ManageFrameTransition(frame, RenderFrame);
             HandleFrameRender(frame);

@@ -46,7 +46,16 @@ namespace NetAF.Targets.Console
 
                 try
                 {
-                    result = System.Console.ReadKey().KeyChar == key;
+                    if (System.Console.IsInputRedirected)
+                    {
+                        // When stdin is piped (e.g., in CI), read a line and treat it as an acknowledgment
+                        _ = System.Console.In.ReadLine();
+                        result = true;
+                    }
+                    else
+                    {
+                        result = System.Console.ReadKey().KeyChar == key;
+                    }
                 }
                 catch (OperationCanceledException)
                 {

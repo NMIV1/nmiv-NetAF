@@ -38,7 +38,14 @@ namespace NetAF.Targets.Console.Rendering
         /// <returns>The size.</returns>
         public Size GetPresentableSize()
         {
-            return new Size(System.Console.WindowWidth, System.Console.WindowHeight);
+            try
+            {
+                return new Size(System.Console.WindowWidth, System.Console.WindowHeight);
+            }
+            catch (System.IO.IOException)
+            {
+                return new Size(120, 40);
+            }
         }
 
         #endregion
