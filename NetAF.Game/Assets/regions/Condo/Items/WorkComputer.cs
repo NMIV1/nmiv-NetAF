@@ -19,9 +19,11 @@ namespace NetAF.Game.Assets.Regions.Condo.Items
         public Item Instantiate()
         {
             // Commands exposed by the Work Computer: list cases, view details, and start a case by id.
+            // Computer-specific commands (cases) are hidden by default and only shown when in ComputerInteractionMode.
+            // Only UseComputer is visible in normal scene mode.
             var commands = new CustomCommand[]
             {
-                new CustomCommand(new CommandHelp("Computer Cases", "List cases on the laptop."), true, true, (game, args) =>
+                new CustomCommand(new CommandHelp("Computer Cases", "List cases on the laptop."), false, true, (game, args) =>
                 {
                     var casesPath = Path.Combine(AppContext.BaseDirectory, "Assets", "Cases", "cases.json");
                     var output = "Available Cases:\n";
@@ -48,7 +50,7 @@ namespace NetAF.Game.Assets.Regions.Condo.Items
                     return new Reaction(ReactionResult.Inform, output);
                 }),
 
-                new CustomCommand(new CommandHelp("ViewCase", "View a case description by id."), true, true, (game, args) =>
+                new CustomCommand(new CommandHelp("ViewCase", "View a case description by id."), false, true, (game, args) =>
                 {
                     if (args == null || args.Length == 0)
                         return new Reaction(ReactionResult.Error, "Usage: viewcase <id>");
@@ -76,7 +78,7 @@ namespace NetAF.Game.Assets.Regions.Condo.Items
                     }
                 }),
 
-                new CustomCommand(new CommandHelp("StartCase", "Start a case by id."), true, true, (game, args) =>
+                new CustomCommand(new CommandHelp("StartCase", "Start a case by id."), false, true, (game, args) =>
                 {
                     if (args == null || args.Length == 0)
                         return new Reaction(ReactionResult.Error, "Usage: startcase <id>");
@@ -85,7 +87,7 @@ namespace NetAF.Game.Assets.Regions.Condo.Items
                     return new Reaction(ReactionResult.Inform, $"Started case {args[0]}");
                 }),
 
-                // Enter the computer interaction mode which exposes computer-specific commands first
+                // Enter the computer interaction mode which exposes computer-specific commands
                 new CustomCommand(new CommandHelp("UseComputer", "Enter the computer interface"), true, true, (game, args) =>
                 {
                     var sceneInterpreter = game.Configuration.InterpreterProvider.Find(typeof(NetAF.Logic.Modes.SceneMode));
