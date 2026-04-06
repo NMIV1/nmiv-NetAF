@@ -1,12 +1,18 @@
 using NetAF.Assets;
 using NetAF.Assets.Characters;
+using NetAF.Commands;
 using NetAF.Conversations;
 using NetAF.Conversations.Instructions;
+using NetAF.Logic;
+using NetAF.Logic.Modes;
+using NetAF.MyGame;
 using NetAF.Utilities;
 using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Text.Json;
+
+// Navigation note: Jump(n) is a RELATIVE delta, GoTo(n) is an ABSOLUTE index, ToName(s) jumps by paragraph name.
 
 namespace NetAF.Game.Assets.Regions.Condo.Items
 {
@@ -15,13 +21,40 @@ namespace NetAF.Game.Assets.Regions.Condo.Items
     {
         public const string Name = "Computer";
 
-        private record CaseEntry(string id, string title, string description, string reward);
+        private record CaseEntry(string id, string title, string description, string reward, string region);
 
         public NonPlayableCharacter Instantiate()
         {
             var conversation = CreateCaseConversation();
-            return new NonPlayableCharacter(new Identifier(Name), new Description("A laptop interface for browsing cases."), conversation: conversation, 
-                examination: req => new Examination("A laptop computer. You can talk to it to browse cases."));
+            
+            NonPlayableCharacter character = null; // will be set after creation
+            
+            var useCommand = new CustomCommand(
+                new CommandHelp("UseComputer", "Use the computer to browse cases", CommandCategory.Custom),
+                true,
+                true,
+                (game, args) =>
+                {
+                    GameVars.Instance.IsReturningFromMode = true;
+                    if (conversation == null || character == null)
+                        return new Reaction(ReactionResult.Error, "No computer interface available.");
+                    
+                    conversation.Next(game);
+                    var interpreter = game.Configuration.InterpreterProvider.Find(typeof(ConversationMode));
+                    game.ChangeMode(new ConversationMode(character, interpreter));
+                    return new Reaction(ReactionResult.Silent, "");
+                }
+            );
+            
+            character = new NonPlayableCharacter(
+                new Identifier(Name), 
+                new Description("A laptop interface for browsing cases."), 
+                conversation: conversation, 
+                commands: [useCommand],
+                examination: req => new Examination("A laptop computer. You can use it to browse your cases.")
+            );
+            character.IsPlayerVisible = true;
+            return character;
         }
 
         private Conversation CreateCaseConversation()
@@ -31,8 +64,7 @@ namespace NetAF.Game.Assets.Regions.Condo.Items
 
             // Paragraph 0: Main menu
             var mainMenuResponses = new List<Response>();
-            mainMenuResponses.Add(new Response("List Cases", new Jump(1)));
-            mainMenuResponses.Add(new Response("Exit Computer", null)); // null ends conversation
+            mainMenuResponses.Add(new Response("List Cases", new GoTo(1)));
             
             paragraphs.Add(new Paragraph("What would you like to do?", "MainMenu") { Responses = mainMenuResponses.ToArray() });
 
@@ -45,10 +77,10 @@ namespace NetAF.Game.Assets.Regions.Condo.Items
             int caseIndex = 2; // start of case-specific paragraphs
             foreach (var c in cases)
             {
-                listResponses.Add(new Response($"View {c.id}", new Jump(caseIndex)));
+                listResponses.Add(new Response($"View {c.id}", new GoTo(caseIndex)));
                 caseIndex += 2; // each case takes 2 paragraphs (view + start)
             }
-            listResponses.Add(new Response("Back", new Jump(0)));
+            listResponses.Add(new Response("Back", new GoTo(0)));
             
             paragraphs.Add(new Paragraph(listText + "\nChoose a case or go back.", "CaseList") { Responses = listResponses.ToArray() });
 
@@ -62,8 +94,8 @@ namespace NetAF.Game.Assets.Regions.Condo.Items
                 var viewText = $"{caseData.title}\n\n{caseData.description}\n\nReward: {caseData.reward}";
                 var viewResponses = new Response[]
                 {
-                    new Response("Start Case", new Jump(nextIndex)),
-                    new Response("Back", new Jump(1))
+                    new Response("Start Case", new GoTo(nextIndex)),
+                    new Response("Back", new GoTo(1))
                 };
                 paragraphs.Add(new Paragraph(viewText, $"View_{caseData.id}") { Responses = viewResponses });
 
@@ -71,7 +103,7 @@ namespace NetAF.Game.Assets.Regions.Condo.Items
                 var startText = $"Case '{caseData.title}' started. Return to your investigation.";
                 var startResponses = new Response[]
                 {
-                    new Response("Back", new Jump(0))
+                    new Response("Back", new GoTo(0))
                 };
                 var startPara = new Paragraph(startText, $"Start_{caseData.id}") { Responses = startResponses };
                 startPara.Action = g => NetAF.MyGame.GameState.AddActiveCase(caseData.id);

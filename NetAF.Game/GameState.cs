@@ -2,18 +2,29 @@ using System;
 using System.IO;
 using System.Text.Json;
 using System.Collections.Generic;
+using System.Linq;
 
 namespace NetAF.MyGame
 {
     public static class GameState
     {
         private static readonly string ActiveCasesPath = Path.Combine(AppContext.BaseDirectory, "Assets", "Cases", "active_cases.json");
+        private static readonly string CasesPath = Path.Combine(AppContext.BaseDirectory, "Assets", "Cases", "cases.json");
 
         public static string CurrentCaseId { get; set; } = string.Empty;
 
         private class ActiveCasesFile
         {
             public List<string> Active { get; set; } = new();
+        }
+
+        private class CaseEntry
+        {
+            public string id { get; set; } = string.Empty;
+            public string title { get; set; } = string.Empty;
+            public string description { get; set; } = string.Empty;
+            public string reward { get; set; } = string.Empty;
+            public string region { get; set; } = string.Empty;
         }
 
         public static IReadOnlyList<string> GetActiveCases()
@@ -55,6 +66,81 @@ namespace NetAF.MyGame
         {
             SaveActiveCases(new List<string>());
             CurrentCaseId = string.Empty;
+        }
+
+        /// <summary>
+        /// Get titles of active cases by resolving IDs against cases.json.
+        /// </summary>
+        public static IReadOnlyList<string> GetActiveCaseTitles()
+        {
+            try
+            {
+                var activeIds = GetActiveCases();
+                if (activeIds.Count == 0)
+                    return new List<string>();
+
+                var allCases = LoadAllCases();
+                var titles = new List<string>();
+
+                foreach (var id in activeIds)
+                {
+                    var match = allCases.FirstOrDefault(c => c.id == id);
+                    titles.Add(match != null ? match.title : $"Case {id}");
+                }
+
+                return titles;
+            }
+            catch
+            {
+                return new List<string>();
+            }
+        }
+
+        /// <summary>
+        /// Get full details of all active cases by resolving IDs against cases.json.
+        /// </summary>
+        public static IReadOnlyList<(string id, string title, string description, string reward, string region)> GetActiveCaseDetails()
+        {
+            try
+            {
+                var activeIds = GetActiveCases();
+                if (activeIds.Count == 0)
+                    return new List<(string, string, string, string, string)>();
+
+                var allCases = LoadAllCases();
+                var details = new List<(string, string, string, string, string)>();
+
+                foreach (var id in activeIds)
+                {
+                    var match = allCases.FirstOrDefault(c => c.id == id);
+                    if (match != null)
+                        details.Add((match.id, match.title, match.description, match.reward, match.region));
+                    else
+                        details.Add((id, $"Case {id}", "Unknown case.", "Unknown", ""));
+                }
+
+                return details;
+            }
+            catch
+            {
+                return new List<(string, string, string, string, string)>();
+            }
+        }
+
+        private static List<CaseEntry> LoadAllCases()
+        {
+            try
+            {
+                if (!File.Exists(CasesPath))
+                    return new List<CaseEntry>();
+
+                var json = File.ReadAllText(CasesPath);
+                return JsonSerializer.Deserialize<List<CaseEntry>>(json) ?? new List<CaseEntry>();
+            }
+            catch
+            {
+                return new List<CaseEntry>();
+            }
         }
 
         private static void SaveActiveCases(IEnumerable<string> ids)

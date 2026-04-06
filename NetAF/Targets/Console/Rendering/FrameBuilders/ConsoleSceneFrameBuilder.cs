@@ -1,4 +1,5 @@
-﻿using System.Linq;
+﻿using System;
+using System.Linq;
 using NetAF.Assets;
 using NetAF.Assets.Characters;
 using NetAF.Assets.Locations;
@@ -50,6 +51,21 @@ namespace NetAF.Targets.Console.Rendering.FrameBuilders
         /// </summary>
         public string CommandTitle { get; set; } = "You can:";
 
+        /// <summary>
+        /// Get or set the clock provider. Returns a string to display in the top-right corner (e.g. "Day: 285/300").
+        /// </summary>
+        public static Func<string> ClockProvider { get; set; }
+
+        /// <summary>
+        /// Get or set the clock text color.
+        /// </summary>
+        public AnsiColor ClockColor { get; set; } = AnsiColor.BrightYellow;
+
+        /// <summary>
+        /// Get or set the highlight color for bracketed text.
+        /// </summary>
+        public AnsiColor HighlightColor { get; set; } = NetAFPalette.NetAFOrange;
+
         #endregion
 
         #region Methods
@@ -89,9 +105,10 @@ namespace NetAF.Targets.Console.Rendering.FrameBuilders
             for (var index = 0; index < commands.Length; index++)
             {
                 var contextualCommand = commands[index];
-                builder.DrawWrapped(contextualCommand.DisplayCommand, leftMargin, lastY + 1, availableSize.Width, CommandsColor, out _, out lastY);
-                builder.DrawWrapped("-", dashStartX, lastY, availableSize.Width, CommandsColor, out _, out lastY);
-                builder.DrawWrapped(contextualCommand.Description.EnsureFinishedSentence(), descriptionStartX, lastY, availableSize.Width, CommandsColor, out _, out lastY);
+                var cmdColor = !string.IsNullOrEmpty(contextualCommand.ColorHint) ? AnsiColor.FromString(contextualCommand.ColorHint) : CommandsColor;
+                builder.DrawWrapped(contextualCommand.DisplayCommand, leftMargin, lastY + 1, availableSize.Width, cmdColor, out _, out lastY);
+                builder.DrawWrapped("-", dashStartX, lastY, availableSize.Width, cmdColor, out _, out lastY);
+                builder.DrawWrapped(contextualCommand.Description.EnsureFinishedSentence(), descriptionStartX, lastY, availableSize.Width, cmdColor, out _, out lastY);
 
                 // only continue if not run out of space
                 if (index < commands.Length - 1 && lastY + requiredPromtHeight + requiredPromtHeight >= availableSize.Height)
@@ -119,12 +136,22 @@ namespace NetAF.Targets.Console.Rendering.FrameBuilders
         /// <returns>The frame.</returns>
         public IFrame Build(Room room, ViewPoint viewPoint, PlayableCharacter player, CommandHelp[] contextualCommands, bool showMap, KeyType keyType, Size size)
         {
-            var availableWidth = size.Width - 4;
-            var availableHeight = size.Height - 2;
             const int leftMargin = 2;
             const int linePadding = 2;
 
+            var availableWidth = size.Width - 4;
+            var availableHeight = size.Height - 2;
+
             gridStringBuilder.Resize(size);
+
+            // draw clock in top-right corner
+            var clockText = ClockProvider?.Invoke();
+            if (!string.IsNullOrEmpty(clockText))
+            {
+                var clockX = size.Width - clockText.Length - 3;
+                if (clockX > leftMargin)
+                    gridStringBuilder.DrawWrapped(clockText, clockX, 2, size.Width - 2, ClockColor, out _, out _);
+            }
 
             gridStringBuilder.DrawWrapped(room.Identifier.Name, leftMargin, 2, availableWidth, TextColor, out _, out var lastY);
             gridStringBuilder.DrawUnderline(leftMargin, lastY + 1, room.Identifier.Name.Length, TextColor);
@@ -132,10 +159,10 @@ namespace NetAF.Targets.Console.Rendering.FrameBuilders
             // display the scene
 
             var description = room.Description.GetDescription().EnsureFinishedSentence();
-            gridStringBuilder.DrawWrapped(description, leftMargin, lastY + 3, availableWidth, TextColor, out _, out lastY);
+            gridStringBuilder.DrawWrappedWithHighlight(description, leftMargin, lastY + 3, availableWidth, TextColor, HighlightColor, out _, out lastY);
 
             if (viewPoint.Any)
-                gridStringBuilder.DrawWrapped(SceneHelper.CreateViewpointAsString(room, viewPoint), leftMargin, lastY + linePadding, availableWidth, TextColor, out _, out lastY);
+                gridStringBuilder.DrawWrappedWithHighlight(SceneHelper.CreateViewpointAsString(room, viewPoint), leftMargin, lastY + linePadding, availableWidth, TextColor, HighlightColor, out _, out lastY);
 
             if (roomMapBuilder != null && showMap)
             {
@@ -149,8 +176,8 @@ namespace NetAF.Targets.Console.Rendering.FrameBuilders
                 gridStringBuilder.DrawWrapped("You have " + StringUtilities.ConstructExaminablesAsSentence(player.Items?.Cast<IExaminable>().ToArray()).StartWithLower(), leftMargin, lastY + 2, availableWidth, TextColor, out _, out lastY);
 
             if (contextualCommands != null && contextualCommands.Length > 0)
-                AddCommands(gridStringBuilder, contextualCommands, new Size(availableWidth, size.Height), leftMargin, lastY + 2, renderPrompt ? 3 : 1);
-            
+                AddCommands(gridStringBuilder, contextualCommands, size, leftMargin, lastY + 2, renderPrompt ? 3 : 1);
+
             if (renderPrompt)
             {
                 gridStringBuilder.DrawHorizontalDivider(availableHeight - 1, BorderColor);

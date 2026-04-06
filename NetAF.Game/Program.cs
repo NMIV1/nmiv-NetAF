@@ -5,7 +5,10 @@ using NetAF.Logic;
 using NetAF.MyGame.Assets.Player;
 using NetAF.Game.Assets.Regions.OpenField;
 using NetAF.Game.Assets.Regions.Condo;
+using NetAF.Game.Assets.Regions.BurnoutDistrict;
 using NetAF.Extensions;
+using NetAF.Rendering;
+using System.Linq;
 
 namespace NetAF.MyGame
 {
@@ -31,9 +34,12 @@ namespace NetAF.MyGame
 
         public static GameCreator Create(GameConfiguration configuration)
         {
+            // Show all command categories (including Conversation commands like Talk)
+            FrameProperties.CommandListType = CommandListType.All;
+            
             static Overworld overworldCreator()
             {
-                var regions = new List<Region> { new Condo().Instantiate(), new OpenField().Instantiate() };
+                var regions = new List<Region> { new Condo().Instantiate(), new OpenField().Instantiate(), new BurnoutDistrict().Instantiate() };
 
                 CustomCommand[] commands =
                 [
@@ -75,6 +81,22 @@ namespace NetAF.MyGame
                         {
                             NetAF.MyGame.GameState.ClearActiveCases();
                             return new(ReactionResult.Inform, "Active cases cleared.");
+                        }),
+                    new(new("Region", "Switch to a region by name (debug)."), false, true, (g, a) =>
+                        {
+                            if (a == null || a.Length == 0)
+                            {
+                                var names = string.Join(", ", g.Overworld.Regions.Select(r => r.Identifier.Name));
+                                return new(ReactionResult.Inform, $"Usage: region <name>. Available: {names}");
+                            }
+
+                            var target = System.Array.Find(g.Overworld.Regions, r => r.Identifier.Name.InsensitiveEquals(string.Join(" ", a)));
+
+                            if (target == null)
+                                return new(ReactionResult.Error, $"Region '{string.Join(" ", a)}' not found.");
+
+                            var result = g.Overworld.Move(target);
+                            return new(ReactionResult.Inform, $"Moved to region: {target.Identifier.Name}.");
                         })
                 ];
 

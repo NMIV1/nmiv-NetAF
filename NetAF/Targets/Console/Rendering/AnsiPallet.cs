@@ -27,6 +27,11 @@
         /// </summary>
         public static AnsiColor NetAFYellow { get; } = new(220, 220, 85);
 
+        /// <summary>
+        /// Get the default NetAF orange.
+        /// </summary>
+        public static AnsiColor NetAFOrange { get; } = new(255, 165, 0);
+
         #endregion
     }
 }

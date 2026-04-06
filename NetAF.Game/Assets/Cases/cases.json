@@ -1,4 +1,4 @@
 [
-  { "id": "1", "title": "The Burnout (Silas Vance)", "description": "High-value emotional extraction from a burnout.", "reward": "High" },
-  { "id": "2", "title": "Missing Cat", "description": "Locate a missing cat in the neighborhood.", "reward": "Low" }
+  { "id": "1", "title": "The Burnout (Silas Vance)", "description": "High-value emotional extraction from a burnout.", "reward": "High", "region": "burnout_district" },
+  { "id": "2", "title": "Missing Cat", "description": "Locate a missing cat in the neighborhood.", "reward": "Low", "region": "" }
 ]

@@ -12,7 +12,8 @@ namespace NetAF.Commands
     /// <param name="shortcut">A shortcut for the command.</param>
     /// <param name="instructions">A instructions on how to use the command.</param>
     /// <param name="displayAs">A string overriding how the command should be displayed.</param>
-    public sealed class CommandHelp(string command, string description, CommandCategory category = CommandCategory.Uncategorized, string shortcut = "", string instructions = "", string displayAs = "") : IEquatable<CommandHelp>, IEquatable<string>
+    /// <param name="colorHint">An optional RGB color hint for rendering (e.g. "255-165-0" for orange).</param>
+    public sealed class CommandHelp(string command, string description, CommandCategory category = CommandCategory.Uncategorized, string shortcut = "", string instructions = "", string displayAs = "", string colorHint = "") : IEquatable<CommandHelp>, IEquatable<string>
     {
         #region Properties
 
@@ -50,6 +51,11 @@ namespace NetAF.Commands
         /// Get the category for this command.
         /// </summary>
         public CommandCategory Category { get; } = category;
+
+        /// <summary>
+        /// Get the color hint for this command (RGB string, e.g. "255-165-0").
+        /// </summary>
+        public string ColorHint { get; } = colorHint;
 
         #endregion
 

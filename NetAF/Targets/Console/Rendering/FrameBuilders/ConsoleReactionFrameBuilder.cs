@@ -38,6 +38,11 @@ namespace NetAF.Targets.Console.Rendering.FrameBuilders
         /// </summary>
         public AnsiColor ErrorMessageColor { get; set; } = AnsiColor.White;
 
+        /// <summary>
+        /// Get or set the highlight color for bracketed text.
+        /// </summary>
+        public AnsiColor HighlightColor { get; set; } = NetAFPalette.NetAFOrange;
+
         #endregion
 
         #region Implementation of IReactionFrameBuilder
@@ -67,7 +72,7 @@ namespace NetAF.Targets.Console.Rendering.FrameBuilders
                 lastY += 3;
             }
 
-            gridStringBuilder.DrawWrapped(message.EnsureFinishedSentence(), leftMargin, lastY, availableWidth, isError ? ErrorMessageColor : MessageColor, out _, out _);
+            gridStringBuilder.DrawWrappedWithHighlight(message.EnsureFinishedSentence(), leftMargin, lastY, availableWidth, isError ? ErrorMessageColor : MessageColor, HighlightColor, out _, out _);
 
             gridStringBuilder.DrawBoundary(BorderColor);
 

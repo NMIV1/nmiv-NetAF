@@ -141,7 +141,6 @@ namespace NetAF.Targets.Console.Rendering
         /// </summary>
         /// <param name="y">The y position of the divider.</param>
         /// <param name="color">The color to draw the boundary.</param>
-        /// <returns>The divider.</returns>
         public void DrawHorizontalDivider(int y, AnsiColor color)
         {
             for (var i = 1; i < DisplaySize.Width - 1; i++)
@@ -173,6 +172,53 @@ namespace NetAF.Targets.Console.Rendering
                 {
                     endX = startX + i;
                     SetCell(endX, endY, chunk[i], color);
+                }
+
+                if (value.Trim().Length > 0)
+                    endY++;
+
+                if (endY >= DisplaySize.Height - 1)
+                    break;
+            }
+        }
+
+        /// <summary>
+        /// Draw a wrapped string with bracket-highlighted text. Characters inside square brackets
+        /// (including the brackets themselves) are drawn in the highlight color.
+        /// </summary>
+        /// <param name="value">The string.</param>
+        /// <param name="startX">The start x position.</param>
+        /// <param name="startY">The start y position.</param>
+        /// <param name="maxWidth">The max width of the string.</param>
+        /// <param name="color">The base color to draw the text.</param>
+        /// <param name="highlightColor">The color for text inside square brackets.</param>
+        /// <param name="endX">The end x position.</param>
+        /// <param name="endY">The end y position.</param>
+        public void DrawWrappedWithHighlight(string value, int startX, int startY, int maxWidth, AnsiColor color, AnsiColor highlightColor, out int endX, out int endY)
+        {
+            endX = startX;
+            endY = startY;
+
+            value = StringUtilities.PreenOutput(value);
+
+            var insideBracket = false;
+
+            while (value.Length > 0)
+            {
+                var chunk = StringUtilities.CutLineFromParagraph(ref value, maxWidth - startX);
+
+                for (var i = 0; i < chunk.Length; i++)
+                {
+                    var c = chunk[i];
+
+                    if (c == '[')
+                        insideBracket = true;
+
+                    endX = startX + i;
+                    SetCell(endX, endY, c, insideBracket ? highlightColor : color);
+
+                    if (c == ']')
+                        insideBracket = false;
                 }
 
                 if (value.Trim().Length > 0)

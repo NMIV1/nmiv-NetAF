@@ -55,6 +55,11 @@ namespace NetAF.Targets.Console.Rendering.FrameBuilders
         public AnsiColor InputColor { get; set; } = AnsiColor.White;
 
         /// <summary>
+        /// Get or set the highlight color for bracketed text.
+        /// </summary>
+        public AnsiColor HighlightColor { get; set; } = NetAFPalette.NetAFOrange;
+
+        /// <summary>
         /// Get or set the command title.
         /// </summary>
         public string CommandTitle { get; set; } = "You can:";
@@ -135,10 +140,10 @@ namespace NetAF.Targets.Console.Rendering.FrameBuilders
                     switch (log.Participant)
                     {
                         case Participant.Player:
-                            gridStringBuilder.DrawWrapped("You: " + log.Line, leftMargin, lastY, availableWidth, PlayerMessageColor, out _, out lastY);
+                            gridStringBuilder.DrawWrappedWithHighlight("You: " + log.Line, leftMargin, lastY, availableWidth, PlayerMessageColor, HighlightColor, out _, out lastY);
                             break;
                         case Participant.Other:
-                            gridStringBuilder.DrawWrapped($"{converser.Identifier.Name}: " + log.Line, leftMargin, lastY, availableWidth, NonPlayerMessageColor, out _, out lastY);
+                            gridStringBuilder.DrawWrappedWithHighlight($"{converser.Identifier.Name}: " + log.Line, leftMargin, lastY, availableWidth, NonPlayerMessageColor, HighlightColor, out _, out lastY);
                             break;
                         default:
                             throw new NotImplementedException();
@@ -159,9 +164,9 @@ namespace NetAF.Targets.Console.Rendering.FrameBuilders
 
                 foreach (var contextualCommand in contextualCommands)
                 {
-                    gridStringBuilder.DrawWrapped(contextualCommand.DisplayCommand, leftMargin, lastY + 1, availableWidth, ResponseColor, out _, out lastY);
+                    gridStringBuilder.DrawWrappedWithHighlight(contextualCommand.DisplayCommand, leftMargin, lastY + 1, availableWidth, ResponseColor, HighlightColor, out _, out lastY);
                     gridStringBuilder.DrawWrapped("-", dashStartX, lastY, availableWidth, ResponseColor, out _, out lastY);
-                    gridStringBuilder.DrawWrapped(contextualCommand.Description, descriptionStartX, lastY, availableWidth, ResponseColor, out _, out lastY);
+                    gridStringBuilder.DrawWrappedWithHighlight(contextualCommand.Description, descriptionStartX, lastY, availableWidth, ResponseColor, HighlightColor, out _, out lastY);
                 }
             }
 

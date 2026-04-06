@@ -1,6 +1,7 @@
 ﻿using NetAF.Assets;
 using NetAF.Assets.Characters;
 using NetAF.Extensions;
+using NetAF.Game.Assets.Items;
 using NetAF.Utilities;
 
 namespace NetAF.MyGame.Assets.Player
@@ -26,6 +27,9 @@ namespace NetAF.MyGame.Assets.Player
             {
                 return new(InteractionResult.NoChange, i);
             });
+
+            // Give the player a phone at game start
+            player.AddItem(new Phone().Instantiate());
 
             return player;
         }
