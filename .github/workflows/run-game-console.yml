@@ -2,6 +2,11 @@ name: run-game-console
 
 on:
   workflow_dispatch:
+    inputs:
+      game_commands:
+        description: 'Comma-separated commands to input during the game session (e.g. look,inventory,north,exit). Leave empty to use the default sequence.'
+        required: false
+        type: string
   push:
     branches: [ "main" ]
   pull_request:
@@ -35,13 +40,20 @@ jobs:
     - name: Run game session and capture output
       shell: pwsh
       continue-on-error: true
+      env:
+        GAME_COMMANDS: ${{ inputs.game_commands }}
       run: |
-        # Prepare a script of piped commands:
+        # Build game input from the workflow dispatch parameter, or fall back to the default sequence:
         #   - blank lines to acknowledge any information/intro screens
         #   - 'look' to display the starting room
         #   - 'about' to show game info
         #   - 'exit' to cleanly quit the game
-        $gameInput = "`n`nlook`nabout`nexit`n"
+        if ($env:GAME_COMMANDS) {
+          $commands = $env:GAME_COMMANDS -split ',' | ForEach-Object { $_.Trim() }
+          $gameInput = "`n`n" + ($commands -join "`n") + "`n"
+        } else {
+          $gameInput = "`n`nlook`nabout`nexit`n"
+        }
         $gameInput | dotnet run --project ConsoleGame/NetAF.MyGame.Console.csproj --no-build --configuration Release 2>&1 |
           Tee-Object -FilePath game-session.txt
 
