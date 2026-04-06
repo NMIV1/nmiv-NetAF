@@ -1,0 +1,59 @@
+name: run-game-console
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [ "main" ]
+  pull_request:
+    branches: [ "main" ]
+
+permissions:
+  contents: read
+
+env:
+  DOTNET_VERSION: '10.0'
+
+jobs:
+  run-game:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v3
+
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v3
+        with:
+          dotnet-version: ${{ env.DOTNET_VERSION }}
+
+      - name: Build ConsoleGame
+        run: dotnet build ConsoleGame/NetAF.MyGame.Console.csproj --configuration Release
+
+      - name: Create input script
+        run: |
+          cat > /tmp/game-input.txt << 'EOF'
+          
+          
+          
+          
+          
+          
+          
+          
+          
+          
+          EOF
+
+      - name: Run game and capture output
+        run: |
+          dotnet run --project ConsoleGame/NetAF.MyGame.Console.csproj --configuration Release \
+            < /tmp/game-input.txt > /tmp/game-output.txt 2>&1 || true
+          echo "Game session completed"
+          cat /tmp/game-output.txt
+
+      - name: Upload console output artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: game-console-output
+          path: /tmp/game-output.txt
+          if-no-files-found: warn

@@ -40,13 +40,21 @@ namespace NetAF.Targets.Console
         /// <returns>True if the key pressed returned the same ASCII character as the key property, else false.</returns>
         private static async Task<bool> WaitForKeyPressAsync(char key, CancellationToken token)
         {
-            return await Task.Run(() =>
+            return await Task.Run(async () =>
             {
                 bool result;
 
                 try
                 {
-                    result = System.Console.ReadKey().KeyChar == key;
+                    if (System.Console.IsInputRedirected)
+                    {
+                        var line = await System.Console.In.ReadLineAsync(token);
+                        result = line != null && line.Length > 0 && line[0] == key;
+                    }
+                    else
+                    {
+                        result = System.Console.ReadKey().KeyChar == key;
+                    }
                 }
                 catch (OperationCanceledException)
                 {
