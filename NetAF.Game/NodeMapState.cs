@@ -252,12 +252,12 @@ namespace NetAF.MyGame
                 ObjAFound, ObjBFound, ObjCFound, ObjDFound, ObjEFound,
                 HasEvidenceHardDrive, HasEvidenceVR, HasEvidenceShoes,
                 HasEvidenceReceipts, HasEvidenceServer
-            }.Select(id => new { id, kind = "base" });
+            }.Select(id => (object)new { id, kind = "base" });
 
             var derivedNodes = connectionRules.Keys
-                .Select(id => new { id, kind = "derived" });
+                .Select(id => (object)new { id, kind = "derived" });
 
-            return [.. baseNodes.Cast<object>(), .. derivedNodes.Cast<object>()];
+            return [.. baseNodes.Concat(derivedNodes)];
         }
 
         #endregion
