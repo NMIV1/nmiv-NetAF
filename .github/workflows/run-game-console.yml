@@ -41,13 +41,7 @@ jobs:
         #   - 'look' to display the starting room
         #   - 'about' to show game info
         #   - 'exit' to cleanly quit the game
-        $gameInput = @"
-
-
-look
-about
-exit
-"@
+        $gameInput = "`n`nlook`nabout`nexit`n"
         $gameInput | dotnet run --project ConsoleGame/NetAF.MyGame.Console.csproj --no-build --configuration Release 2>&1 |
           Tee-Object -FilePath game-session.txt
 
