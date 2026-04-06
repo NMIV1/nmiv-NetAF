@@ -15,7 +15,8 @@ namespace NetAF.Game.Assets.Regions.Condo.Rooms
             room.AddItem(new Couch().Instantiate());
             room.AddItem(new Desk().Instantiate());
             room.AddItem(new Lamp().Instantiate());
-            room.AddItem(new WorkComputer().Instantiate());
+            // Add the case computer NPC for browsing and starting cases
+            room.AddCharacter(new CaseComputer().Instantiate());
             return room;
         }
     }
