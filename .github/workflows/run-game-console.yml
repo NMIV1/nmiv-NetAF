@@ -11,49 +11,60 @@ permissions:
   contents: read
 
 env:
-  DOTNET_VERSION: '10.0'
+  DOTNET_VERSION: '10.0.x'
 
 jobs:
   run-game:
-    runs-on: ubuntu-latest
+    runs-on: windows-latest
 
     steps:
-      - name: Checkout repository
-        uses: actions/checkout@v3
+    - name: Checkout repository
+      uses: actions/checkout@v4
 
-      - name: Setup .NET
-        uses: actions/setup-dotnet@v3
-        with:
-          dotnet-version: ${{ env.DOTNET_VERSION }}
+    - name: Setup .NET
+      uses: actions/setup-dotnet@v4
+      with:
+        dotnet-version: ${{ env.DOTNET_VERSION }}
 
-      - name: Build ConsoleGame
-        run: dotnet build ConsoleGame/NetAF.MyGame.Console.csproj --configuration Release
+    - name: Restore dependencies
+      run: dotnet restore ConsoleGame/NetAF.MyGame.Console.csproj
 
-      - name: Create input script
-        run: |
-          cat > /tmp/game-input.txt << 'EOF'
-          
-          
-          
-          
-          
-          
-          
-          
-          
-          
-          EOF
+    - name: Build console game
+      run: dotnet build ConsoleGame/NetAF.MyGame.Console.csproj --no-restore --configuration Release
 
-      - name: Run game and capture output
-        run: |
-          dotnet run --project ConsoleGame/NetAF.MyGame.Console.csproj --configuration Release \
-            < /tmp/game-input.txt > /tmp/game-output.txt 2>&1 || true
-          echo "Game session completed"
-          cat /tmp/game-output.txt
+    - name: Run game session and capture output
+      shell: pwsh
+      continue-on-error: true
+      run: |
+        # Prepare a script of piped commands:
+        #   - blank lines to acknowledge any information/intro screens
+        #   - 'look' to display the starting room
+        #   - 'about' to show game info
+        #   - 'exit' to cleanly quit the game
+        $gameInput = @"
 
-      - name: Upload console output artifact
-        uses: actions/upload-artifact@v4
-        with:
-          name: game-console-output
-          path: /tmp/game-output.txt
-          if-no-files-found: warn
+
+look
+about
+exit
+"@
+        $gameInput | dotnet run --project ConsoleGame/NetAF.MyGame.Console.csproj --no-build --configuration Release 2>&1 |
+          Tee-Object -FilePath game-session.txt
+
+    - name: Display game session output
+      shell: pwsh
+      if: always()
+      run: |
+        if (Test-Path game-session.txt) {
+          Write-Host "=== Game Session Output ==="
+          Get-Content game-session.txt
+        } else {
+          Write-Host "No output was captured."
+        }
+
+    - name: Upload game session output
+      uses: actions/upload-artifact@v4
+      if: always()
+      with:
+        name: game-session-output
+        path: game-session.txt
