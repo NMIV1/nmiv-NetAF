@@ -1,6 +1,11 @@
 name: Nodemap Graph
 
 on:
+  pull_request:
+    paths:
+      - 'NetAF.Game/**'
+      - 'tools/nodemap/**'
+      - '.github/workflows/nodemap-graph.yml'
   workflow_dispatch:
 
 permissions:
