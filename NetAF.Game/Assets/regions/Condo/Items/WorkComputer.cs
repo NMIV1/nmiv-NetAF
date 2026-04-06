@@ -18,7 +18,7 @@ namespace NetAF.Game.Assets.Regions.Condo.Items
 
         public Item Instantiate()
         {
-            // Commands exposed by the Work Computer: list cases and start a case by id.
+            // Commands exposed by the Work Computer: list cases, view details, and start a case by id.
             var commands = new CustomCommand[]
             {
                 new CustomCommand(new CommandHelp("Computer Cases", "List cases on the laptop."), true, true, (game, args) =>
@@ -48,12 +48,40 @@ namespace NetAF.Game.Assets.Regions.Condo.Items
                     return new Reaction(ReactionResult.Inform, output);
                 }),
 
+                new CustomCommand(new CommandHelp("ViewCase", "View a case description by id."), true, true, (game, args) =>
+                {
+                    if (args == null || args.Length == 0)
+                        return new Reaction(ReactionResult.Error, "Usage: viewcase <id>");
+
+                    var casesPath = Path.Combine(AppContext.BaseDirectory, "Assets", "Cases", "cases.json");
+
+                    try
+                    {
+                        if (!File.Exists(casesPath))
+                            return new Reaction(ReactionResult.Error, "No cases available.");
+
+                        var json = File.ReadAllText(casesPath);
+                        var list = JsonSerializer.Deserialize<List<CaseEntry>>(json) ?? new List<CaseEntry>();
+                        var match = list.Find(c => c.id == args[0]);
+
+                        if (match == null)
+                            return new Reaction(ReactionResult.Error, $"Case {args[0]} not found.");
+
+                        var output = $"{match.title}\n{match.description}\nReward: {match.reward}";
+                        return new Reaction(ReactionResult.Inform, output);
+                    }
+                    catch
+                    {
+                        return new Reaction(ReactionResult.Error, "Failed to read cases.");
+                    }
+                }),
+
                 new CustomCommand(new CommandHelp("StartCase", "Start a case by id."), true, true, (game, args) =>
                 {
                     if (args == null || args.Length == 0)
                         return new Reaction(ReactionResult.Error, "Usage: startcase <id>");
 
-                    NetAF.MyGame.GameState.CurrentCaseId = args[0];
+                    NetAF.MyGame.GameState.AddActiveCase(args[0]);
                     return new Reaction(ReactionResult.Inform, $"Started case {args[0]}");
                 })
             };
