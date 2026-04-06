@@ -20,7 +20,8 @@ namespace NetAF.Game.Assets.Regions.Condo.Items
         public NonPlayableCharacter Instantiate()
         {
             var conversation = CreateCaseConversation();
-            return new NonPlayableCharacter(new Identifier(Name), new Description("A laptop interface for browsing cases."), conversation: conversation);
+            return new NonPlayableCharacter(new Identifier(Name), new Description("A laptop interface for browsing cases."), conversation: conversation, 
+                examination: req => new Examination("A laptop computer. You can talk to it to browse cases."));
         }
 
         private Conversation CreateCaseConversation()

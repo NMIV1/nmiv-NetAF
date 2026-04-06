@@ -7,7 +7,7 @@ namespace NetAF.Game.Assets.Regions.Condo.Rooms
     public class LivingRoom : IAssetTemplate<Room>
     {
         private const string Name = "Living Room";
-        private const string Description = "A cramped living room with a couch and a small desk. The work computer sits on the desk.";
+        private const string Description = "A cramped living room with a couch and a small desk. A laptop computer sits on the desk, ready to browse your cases.";
 
         public Room Instantiate()
         {
