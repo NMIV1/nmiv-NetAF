@@ -1,34 +1,57 @@
 name: Nodemap Graph
 
 on:
+  pull_request:
+    paths:
+      - 'NetAF.Game/**'
+      - 'tools/nodemap/**'
+      - '.github/workflows/nodemap-graph.yml'
   workflow_dispatch:
+
+permissions:
+  contents: read
 
 jobs:
   generate:
     runs-on: windows-latest
     steps:
       - name: Checkout
-        uses: actions/checkout@v2
+        uses: actions/checkout@v4
+
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '10.0.x'
+
+      - name: Build game project
+        run: dotnet build NetAF.Game/NetAF.MyGame.csproj -c Release
+
+      - name: Export NodeMapState schema JSON
+        shell: pwsh
+        run: |
+          $outDir = "tools/nodemap/out"
+          New-Item -ItemType Directory -Force -Path $outDir | Out-Null
+          dotnet run --project tools/nodemap/NodeMapExporter/NodeMapExporter.csproj -- $outDir
 
       - name: Setup Python
-        uses: actions/setup-python@v2
+        uses: actions/setup-python@v5
         with:
-          python-version: 3.x
+          python-version: '3.x'
 
-      - name: Install Graphviz
+      - name: Install Graphviz (Windows)
+        shell: pwsh
         run: |
-          choco install graphviz
+          choco install graphviz -y
+          dot -V
 
-      - name: Install Python Dependencies
-        run: |
-          python -m pip install graphviz
+      - name: Install Python dependencies
+        run: python -m pip install --upgrade pip
 
-      - name: Run Nodemap Script
-        run: |
-          python tools/nodemap/generate_nodemap.py
+      - name: Generate nodemap graph
+        run: python tools/nodemap/generate_nodemap.py
 
-      - name: Upload Nodemap Graph
-        uses: actions/upload-artifact@v2
+      - name: Upload Nodemap artifacts
+        uses: actions/upload-artifact@v4
         with:
           name: nodemap-graph
           path: tools/nodemap/out/*

@@ -1,18 +1,15 @@
-using NetAF.Assets;
 using NetAF.Assets.Characters;
 using NetAF.Conversations;
 using NetAF.Conversations.Instructions;
-using NetAF.Game.Assets.Regions.BurnoutDistrict.Items.Evidence;
 using NetAF.MyGame;
 using NetAF.MyGame.Skills;
 using System.Collections.Generic;
-using System.Linq;
 
 namespace NetAF.Game.Assets.Regions.BurnoutDistrict.Rooms
 {
     /// <summary>
-    /// Builds Silas's conversation dynamically based on the player's inventory,
-    /// NodeMapState connections, and skill check options.
+    /// Builds Silas's conversation dynamically based on NodeMapState (truth-table),
+    /// which tracks both evidence possession and discovered connections.
     /// </summary>
     public static class SilasConversationBuilder
     {
@@ -71,17 +68,17 @@ namespace NetAF.Game.Assets.Regions.BurnoutDistrict.Rooms
 
         /// <summary>
         /// Build the conversation for Silas based on the player's current state.
+        /// Evidence possession and connections are read from NodeMapState (truth-table).
         /// </summary>
-        /// <param name="player">The player character, used to check inventory.</param>
+        /// <param name="player">The player character (unused for evidence checks; NodeMapState is the source of truth).</param>
         /// <returns>A conversation tailored to the player's current evidence and connections.</returns>
         public static Conversation Build(PlayableCharacter player)
         {
-            var playerItems = player?.Items ?? [];
-            bool hasHardDrive = playerItems.Any(i => i.Identifier.Name == BurnerHardDriveEvidence.ItemName);
-            bool hasVRHeadset = playerItems.Any(i => i.Identifier.Name == CrackedVRHeadsetEvidence.ItemName);
-            bool hasShoes = playerItems.Any(i => i.Identifier.Name == UnwornPlatformShoesEvidence.ItemName);
-            bool hasReceipts = playerItems.Any(i => i.Identifier.Name == ParkingReceiptsEvidence.ItemName);
-            bool hasServer = playerItems.Any(i => i.Identifier.Name == ShadowRoommateServerEvidence.ItemName);
+            bool hasHardDrive = NodeMapState.HasFlag(NodeMapState.HasEvidenceHardDrive);
+            bool hasVRHeadset = NodeMapState.HasFlag(NodeMapState.HasEvidenceVR);
+            bool hasShoes = NodeMapState.HasFlag(NodeMapState.HasEvidenceShoes);
+            bool hasReceipts = NodeMapState.HasFlag(NodeMapState.HasEvidenceReceipts);
+            bool hasServer = NodeMapState.HasFlag(NodeMapState.HasEvidenceServer);
 
             bool connLexicon = NodeMapState.HasConnection(NodeMapState.ConnLexicon);
             bool connHaunting = NodeMapState.HasConnection(NodeMapState.ConnHaunting);

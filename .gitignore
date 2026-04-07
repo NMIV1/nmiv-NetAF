@@ -349,3 +349,8 @@ healthchecksdb
 # Allow log directories that are part of source
 !NetAF/Log/*
 !NetAF.Tests/Log/*
+
+# NodeMap generated output (build artifacts)
+tools/nodemap/out/
+tools/nodemap/NodeMapExporter/bin/
+tools/nodemap/NodeMapExporter/obj/
